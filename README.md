@@ -1,0 +1,1 @@
+本项目旨在训练从 Openarm 采集到的pick&place 矿泉水瓶任务数据， 兼做 lerobot 训练流程熟悉用。 
