@@ -1,0 +1,95 @@
+# Project-local agent metadata
+/.agents/
+/.codex/
+
+# Independent upstream checkout (has its own Git repository)
+/lerobot/
+
+# Python environments and local configuration
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+env/
+ENV/
+.python-version
+__pypackages__/
+
+# Python bytecode and build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+sdist/
+*.egg-info/
+*.egg
+.eggs/
+pip-wheel-metadata/
+
+# Test, type-checking, and tool caches
+.pytest_cache/
+.hypothesis/
+.tox/
+.nox/
+.mypy_cache/
+.pyre/
+.pytype/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.ipynb_checkpoints/
+
+# Logs, temporary files, and experiment tracking
+*.log
+logs/
+tmp/
+/runs/
+/wandb/
+/tensorboard/
+
+# Training outputs and checkpoints generated in this workspace
+/outputs/
+/train/outputs/
+**/checkpoints/
+
+# Local datasets and recorded robot data
+/data/
+/datasets/
+/lerobot_data_*/
+*.parquet
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# Model files are normally downloaded or generated outside source control
+*.safetensors
+*.pth
+*.pt
+*.ckpt
+*.onnx
+
+# IDE and editor files
+.vscode/
+.idea/
+.spyderproject
+.spyproject
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Robotics middleware and simulator artifacts
+.ros/
+ros_logs/
+*.bag
+*.db3
