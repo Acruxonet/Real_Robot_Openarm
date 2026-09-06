@@ -58,6 +58,11 @@ fi
 source "${CONDA_SH}"
 conda activate "${CONDA_ENV}"
 
+# Defensive limit for any torchcodec use outside the production YAML. The
+# production run uses PyAV, but keeping this small prevents an accidental
+# decoder-cache expansion if a CLI override selects torchcodec.
+export LEROBOT_VIDEO_DECODER_CACHE_SIZE="${LEROBOT_VIDEO_DECODER_CACHE_SIZE:-2}"
+
 cd "${ROOT_DIR}"
 mkdir -p "${OUTPUT_ROOT}"
 

@@ -7,7 +7,10 @@ dataset:
   # [-1, 1] at the Wan VAE boundary.
   image_transforms:
     enable: false
-  video_backend: torchcodec
+  # torchcodec's long-lived decoder state grows in this 3-camera/9-frame
+  # workload and eventually exhausts host RAM. PyAV closes each container
+  # after a sample, keeping the decoder memory bounded.
+  video_backend: pyav
   streaming: false
 
 policy:
@@ -77,9 +80,11 @@ seed: 1000
 
 # Match the requested production dataloader throughput.
 batch_size: 16
-num_workers: 4
+# Keep video decoding in the training process. Multiple persistent torchcodec
+# workers were the source of the host-RAM exhaustion (not GPU memory).
+num_workers: 0
 prefetch_factor: 1
-persistent_workers: true
+persistent_workers: false
 steps: 20000
 log_freq: 100
 env_eval_freq: 0
