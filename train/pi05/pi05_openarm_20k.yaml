@@ -1,0 +1,63 @@
+# Fine-tune the pretrained PI0.5 base policy on the OpenArm dataset.
+dataset:
+  repo_id: local/lerobot_data_20260831
+  root: /mnt/data/nas/hufangchi/projects/real_robot/lerobot_data_20260831
+  use_imagenet_stats: true
+  # PI0.5 performs its required aspect-ratio-preserving 224x224 resize and
+  # [-1, 1] pixel conversion inside the policy. Keep dataset augmentation off
+  # for the baseline run.
+  image_transforms:
+    enable: false
+  video_backend: torchcodec
+  streaming: false
+
+policy:
+  type: pi05
+  # Load the pretrained weights while deriving the OpenArm feature names and
+  # shapes from this dataset.
+  pretrained_path: lerobot/pi05_base
+  device: cuda
+  dtype: bfloat16
+  use_amp: false
+  push_to_hub: false
+
+  image_resolution: [224, 224]
+  max_state_dim: 32
+  max_action_dim: 32
+  chunk_size: 50
+  n_action_steps: 50
+
+  # Robustly map state/action to [-1, 1] using the dataset's q01/q99 stats.
+  normalization_mapping:
+    VISUAL: IDENTITY
+    STATE: QUANTILES
+    ACTION: QUANTILES
+
+  # PI0.5 is a 4B-parameter model. Checkpoint activations to reduce VRAM use.
+  gradient_checkpointing: true
+  compile_model: false
+  freeze_vision_encoder: false
+  train_expert_only: false
+
+output_dir: /mnt/data/nas/hufangchi/projects/real_robot/train/outputs/pi05/pi05_openarm_20k
+job_name: pi05_openarm_20k
+seed: 1000
+
+# A single H20 has ample memory for a practical starting batch. Reduce this
+# first if another GPU is used or if the three camera views cause an OOM.
+batch_size: 32
+num_workers: 4
+prefetch_factor: 2
+persistent_workers: true
+steps: 20000
+log_freq: 100
+env_eval_freq: 0
+save_checkpoint: true
+save_freq: 5000
+
+wandb:
+  enable: true
+  disable_artifact: true
+  project: openarm-policy
+  entity: null
+  notes: "Fine-tune lerobot/pi05_base on the three-camera OpenArm dataset"
