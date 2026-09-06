@@ -1,0 +1,94 @@
+# Fine-tune the pretrained FastWAM base policy on the three-camera OpenArm dataset.
+dataset:
+  repo_id: local/lerobot_data_20260831
+  root: /mnt/data/nas/hufangchi/projects/real_robot/lerobot_data_20260831
+  use_imagenet_stats: true
+  # FastWAM performs its own per-camera resize and maps pixels from [0, 1] to
+  # [-1, 1] at the Wan VAE boundary.
+  image_transforms:
+    enable: false
+  video_backend: torchcodec
+  streaming: false
+
+policy:
+  type: fastwam
+  # Load the released LeRobot FastWAM weights explicitly. FastWAM's
+  # shape-aware non-strict loader keeps compatible backbone weights while
+  # reinitializing the 16-DoF action/proprioception tensors whose shapes differ.
+  pretrained_path: lerobot/fastwam_base
+  base_model_id: lerobot/fastwam_base
+  model_id: Wan-AI/Wan2.2-TI2V-5B
+
+  device: cuda
+  torch_dtype: bfloat16
+  use_amp: false
+  push_to_hub: false
+
+  # OpenArm has 16-dimensional bimanual proprioception and actions.
+  action_dim: 16
+  proprio_dim: 16
+  action_horizon: 32
+  n_action_steps: 32
+
+  # FastWAM concatenates camera views along width. Three 224x224 views become
+  # one 224x672 model input. Dataset frames are resized inside the policy.
+  image_size: [224, 672]
+  input_features:
+    "observation.state":
+      type: STATE
+      shape: [16]
+    "observation.images.left":
+      type: VISUAL
+      shape: [3, 224, 224]
+    "observation.images.right":
+      type: VISUAL
+      shape: [3, 224, 224]
+    "observation.images.head":
+      type: VISUAL
+      shape: [3, 224, 224]
+  output_features:
+    action:
+      type: ACTION
+      shape: [16]
+
+  # At 30 Hz, supervise 32 actions and nine video frames sampled every four
+  # frames. This satisfies the Wan VAE temporal-tokenization constraint.
+  num_video_frames: 33
+  action_video_freq_ratio: 4
+
+  # Auxiliary Wan text/tokenizer components used by the pretrained policy.
+  tokenizer_model_id: google/umt5-xxl
+  text_encoder_model_id: Wan-AI/Wan2.2-TI2V-5B-Diffusers
+
+  # FastWAM is a multi-billion-parameter model; checkpoint activations to fit a
+  # full fine-tune on a single large-memory GPU.
+  use_gradient_checkpointing: true
+  freeze_video_expert: false
+  compile_action_infer: false
+
+  normalization_mapping:
+    VISUAL: IDENTITY
+    STATE: MEAN_STD
+    ACTION: MEAN_STD
+
+output_dir: /mnt/data/nas/hufangchi/projects/real_robot/train/outputs/fastwam/fastwam_openarm
+job_name: fastwam_openarm
+seed: 1000
+
+# Match the requested production dataloader throughput.
+batch_size: 16
+num_workers: 4
+prefetch_factor: 1
+persistent_workers: true
+steps: 20000
+log_freq: 100
+env_eval_freq: 0
+save_checkpoint: true
+save_freq: 2000
+
+wandb:
+  enable: true
+  disable_artifact: true
+  project: openarm-policy
+  entity: null
+  notes: "FastWAM fine-tune on the three-camera, 16-action OpenArm dataset"
