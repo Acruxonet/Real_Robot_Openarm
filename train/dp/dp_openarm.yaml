@@ -1,0 +1,97 @@
+# Diffusion Policy baseline aligned with the OpenArm ACT configuration.
+# All three camera streams are 4:3, so the built-in resize to 240x320 preserves
+# their aspect ratio without a custom dataset transform.
+
+dataset:
+  repo_id: local/lerobot_data_20260831
+  root: /mnt/data/nas/hufangchi/projects/real_robot/lerobot_data_20260831
+  use_imagenet_stats: true
+  image_transforms:
+    enable: true
+    max_num_transforms: 1
+    random_order: false
+    tfs:
+      resize:
+        weight: 1.0
+        type: Resize
+        kwargs:
+          size: [240, 320]
+  video_backend: torchcodec
+  streaming: false
+
+policy:
+  type: diffusion
+  device: cuda
+  use_amp: true
+  push_to_hub: false
+
+  input_features:
+    "observation.state":
+      type: STATE
+      shape: [16]
+    "observation.images.left":
+      type: VISUAL
+      shape: [3, 240, 320]
+    "observation.images.right":
+      type: VISUAL
+      shape: [3, 240, 320]
+    "observation.images.head":
+      type: VISUAL
+      shape: [3, 240, 320]
+
+  output_features:
+    action:
+      type: ACTION
+      shape: [16]
+
+  # Keep LeRobot Diffusion's official temporal defaults.
+  n_obs_steps: 2
+  horizon: 64
+  n_action_steps: 32
+  drop_n_last_frames: 7
+
+  vision_backbone: resnet18
+  pretrained_backbone_weights: ResNet18_Weights.IMAGENET1K_V1
+  resize_shape: [240, 320]
+  crop_ratio: 1.0
+  crop_shape: null
+  crop_is_random: true
+  use_separate_rgb_encoder_per_camera: true
+
+  down_dims: [512, 1024, 2048]
+  kernel_size: 5
+  n_groups: 8
+  diffusion_step_embed_dim: 128
+  use_film_scale_modulation: true
+  gradient_checkpointing: false
+
+  noise_scheduler_type: DDPM
+  num_train_timesteps: 100
+  beta_schedule: squaredcos_cap_v2
+  beta_start: 0.0001
+  beta_end: 0.02
+  prediction_type: epsilon
+  clip_sample: true
+  clip_sample_range: 1.0
+
+output_dir: /mnt/data/nas/hufangchi/projects/real_robot/train/outputs/dp/dp_openarm_20260902
+job_name: dp_openarm_20260902
+seed: 1000
+
+# Keep these equal to the current ACT baseline for the first comparison.
+batch_size: 32
+num_workers: 8
+prefetch_factor: 2
+persistent_workers: true
+steps: 100000
+log_freq: 100
+env_eval_freq: 0
+save_checkpoint: true
+save_freq: 10000
+
+wandb:
+  enable: true
+  disable_artifact: true
+  project: openarm-policy
+  entity: null
+  notes: "OpenArm Diffusion Policy with aspect-ratio-preserving resize"
