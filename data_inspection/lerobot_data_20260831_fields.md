@@ -1,7 +1,7 @@
 # LeRobot 数据集字段说明
 
 本文档总结 `lerobot_data_20260831` 的字段、数据类型、形状和图像格式。字段定义来自
-`meta/info.json`，数值统计来自 `meta/stats.json`。
+`meta/info.json`，数值统计来自 `meta/stats.json`；视频分辨率另外从全部 MP4 视频轨道核查。
 
 ## 数据集概览
 
@@ -33,7 +33,7 @@ Pass the black bottle from the right hand to the left, then place it into the wh
 | `observation.state` | `float32` | `[16]` | 30 Hz | 双臂当前状态向量 |
 | `observation.images.left` | `video` | `[480, 640, 3]` | 30 Hz | 左侧相机 RGB 视频帧 |
 | `observation.images.right` | `video` | `[480, 640, 3]` | 30 Hz | 右侧相机 RGB 视频帧 |
-| `observation.images.head` | `video` | `[720, 1280, 3]` | 30 Hz | 头部/全局相机 RGB 视频帧 |
+| `observation.images.head` | `video` | metadata `[720, 1280, 3]`; MP4 实测 `[960, 1280, 3]` | 30 Hz | 头部/全局相机 RGB 视频帧 |
 | `timestamp` | `float32` | `[1]` | 30 Hz | 当前帧时间戳，单位为秒 |
 | `frame_index` | `int64` | `[1]` | 30 Hz | 当前 episode 内的帧编号 |
 | `episode_index` | `int64` | `[1]` | 30 Hz | episode 编号，范围为 `0..147` |
@@ -159,12 +159,17 @@ max = [
 ### `observation.images.head`
 
 - metadata dtype：`video`
-- 单帧 shape：`[720, 1280, 3]`
+- metadata 声明：`[720, 1280, 3]`
+- MP4 实测单帧 shape：`[960, 1280, 3]`
 - 语义：头部/全局相机 RGB 图像
 - 存储：MP4 视频，AV1 codec，`yuv420p` pixel format
 - 视频帧率：30 Hz
 - 音频：无
 - 深度图：否
+
+视频轨道核查覆盖 148 个 episode 文件：`left` 和 `right` 均为 `640x480`，`head`
+均为 `1280x960`。因此 head 的 `720` 是 metadata 错误，不是视频实际分辨率；读取和
+预处理应以 MP4 实际帧为准。
 
 ### 图像读取时的 dtype
 

@@ -34,7 +34,12 @@ Its main properties are:
 | State | `float32`, shape `[16]` |
 | Action | `float32`, shape `[16]` |
 | Cameras | `left`, `right`, `head` |
-| Native camera shapes | left/right `[480, 640, 3]`; head `[720, 1280, 3]` |
+| Native camera shapes (MP4 verified) | left/right `[480, 640, 3]`; head `[960, 1280, 3]` |
+
+The MP4 streams were checked across all 148 episodes: `left` and `right` are
+consistently `640x480`, and `head` is consistently `1280x960`. The dataset
+`meta/info.json` incorrectly declares the head stream as `1280x720`; treat the
+video stream as authoritative and do not edit the read-only dataset in place.
 
 The complete field and metadata inspection is in
 [`data_inspection/lerobot_data_20260831_fields.md`](data_inspection/lerobot_data_20260831_fields.md).
